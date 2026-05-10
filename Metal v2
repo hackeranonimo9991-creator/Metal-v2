@@ -1,0 +1,222 @@
+-- SERVICIOS
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- CONFIGURACIÓN DE LA INTERFAZ
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MetalAimbotV2_Hacker"
+ScreenGui.Parent = CoreGui
+ScreenGui.DisplayOrder = 999999
+ScreenGui.ResetOnSpawn = false -- No se desactiva al morir
+
+-- FRAME PRINCIPAL
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 300, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -150)
+MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+MainFrame.BorderSizePixel = 2
+MainFrame.BorderColor3 = Color3.fromRGB(0, 255, 0)
+MainFrame.Parent = ScreenGui
+
+-- TÍTULO
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Text = " METAL AIMBOT V2 "
+Title.TextColor3 = Color3.fromRGB(0, 255, 0)
+Title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Title.Font = Enum.Font.Code
+Title.Parent = MainFrame
+
+-- BOTÓN CERRAR (X)
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -30, 0, 0)
+CloseBtn.Text = "X"
+CloseBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+CloseBtn.TextColor3 = Color3.new(1, 1, 1)
+CloseBtn.Parent = MainFrame
+CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+
+-- BOTÓN MINIMIZAR
+local MinBtn = Instance.new("TextButton")
+MinBtn.Size = UDim2.new(0, 30, 0, 30)
+MinBtn.Position = UDim2.new(1, -60, 0, 0)
+MinBtn.Text = "-"
+MinBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MinBtn.TextColor3 = Color3.fromRGB(0, 255, 0)
+MinBtn.Parent = MainFrame
+
+-- CÍRCULO FLOTANTE (ESTADO MINIMIZADO)
+local FloatingCircle = Instance.new("TextButton")
+FloatingCircle.Size = UDim2.new(0, 50, 0, 50)
+FloatingCircle.Visible = false
+FloatingCircle.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+FloatingCircle.Text = "M"
+FloatingCircle.Font = Enum.Font.Code
+FloatingCircle.Parent = ScreenGui
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(1, 0)
+UICorner.Parent = FloatingCircle
+
+-- LÓGICA MINIMIZAR/MAXIMIZAR
+MinBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+    FloatingCircle.Visible = true
+    FloatingCircle.Position = MainFrame.Position
+end)
+
+FloatingCircle.MouseButton1Click:Connect(function()
+    MainFrame.Visible = true
+    FloatingCircle.Visible = false
+end)
+
+-- LÓGICA DE ARRASTRE (DRAG)
+local function drag(obj)
+    local dragging, dragInput, dragStart, startPos
+    obj.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = obj.Position
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            obj.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    obj.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+end
+drag(MainFrame)
+drag(FloatingCircle)
+
+-- VARIABLES DE FUNCIONES
+local AimbotActive = false
+local XRayActive = false
+local AimDistance = 500
+
+-- TOGGLE AIMBOT
+local AimToggle = Instance.new("TextButton")
+AimToggle.Size = UDim2.new(0.8, 0, 0, 40)
+AimToggle.Position = UDim2.new(0.1, 0, 0.2, 0)
+AimToggle.Text = "[ AIMBOT: OFF ]"
+AimToggle.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+AimToggle.TextColor3 = Color3.fromRGB(0, 255, 0)
+AimToggle.Parent = MainFrame
+
+AimToggle.MouseButton1Click:Connect(function()
+    AimbotActive = not AimbotActive
+    AimToggle.Text = AimbotActive and "[ AIMBOT: ON ]" or "[ AIMBOT: OFF ]"
+    AimToggle.BorderColor3 = AimbotActive and Color3.new(0, 1, 0) or Color3.new(1, 0, 0)
+end)
+
+-- SLIDER DE DISTANCIA
+local SliderFrame = Instance.new("Frame")
+SliderFrame.Size = UDim2.new(0.8, 0, 0, 10)
+SliderFrame.Position = UDim2.new(0.1, 0, 0.45, 0)
+SliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+SliderFrame.Parent = MainFrame
+
+local SliderBtn = Instance.new("TextButton")
+SliderBtn.Size = UDim2.new(0, 20, 0, 20)
+SliderBtn.Position = UDim2.new(0.5, -10, 0, -5)
+SliderBtn.Text = ""
+SliderBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+SliderBtn.Parent = SliderFrame
+
+local DistLabel = Instance.new("TextLabel")
+DistLabel.Size = UDim2.new(1, 0, 0, 20)
+DistLabel.Position = UDim2.new(0, 0, -2, 0)
+DistLabel.Text = "DISTANCE: " .. AimDistance
+DistLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+DistLabel.BackgroundTransparency = 1
+DistLabel.Parent = SliderFrame
+
+-- Lógica Slider (Touch & Mouse)
+SliderBtn.InputChanged:Connect(function(input)
+    if dragging or (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) or #UserInputService:GetNavigationGamepads() > 0 then
+            local pos = math.clamp((input.Position.X - SliderFrame.AbsolutePosition.X) / SliderFrame.AbsoluteSize.X, 0, 1)
+            SliderBtn.Position = UDim2.new(pos, -10, 0, -5)
+            AimDistance = math.floor(pos * 2000)
+            DistLabel.Text = "DISTANCE: " .. AimDistance
+        end
+    end
+end)
+
+-- TOGGLE RAYOS X
+local XrayBtn = Instance.new("TextButton")
+XrayBtn.Size = UDim2.new(0.8, 0, 0, 40)
+XrayBtn.Position = UDim2.new(0.1, 0, 0.7, 0)
+XrayBtn.Text = "[ X-RAY: OFF ]"
+XrayBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+XrayBtn.TextColor3 = Color3.fromRGB(0, 255, 0)
+XrayBtn.Parent = MainFrame
+
+XrayBtn.MouseButton1Click:Connect(function()
+    XRayActive = not XRayActive
+    XrayBtn.Text = XRayActive and "[ X-RAY: ON ]" or "[ X-RAY: OFF ]"
+end)
+
+-- BUCLE PRINCIPAL (AIMBOT & ESP)
+RunService.RenderStepped:Connect(function()
+    if AimbotActive then
+        local target = nil
+        local maxDist = AimDistance
+        
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                local head = p.Character.Head
+                local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                
+                if onScreen then
+                    local mag = (head.Position - Camera.CFrame.Position).Magnitude
+                    if mag <= maxDist then
+                        -- Verificación de estructura (Wall Check)
+                        local ray = Ray.new(Camera.CFrame.Position, (head.Position - Camera.CFrame.Position).Unit * mag)
+                        local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, p.Character})
+                        
+                        if not hit then
+                            target = head
+                            maxDist = mag
+                        end
+                    end
+                end
+            end
+        end
+        
+        if target and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
+        end
+    end
+
+    -- Lógica X-RAY (ESP con Highlight)
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local hl = p.Character:FindFirstChild("MetalESP")
+            if XRayActive then
+                if not hl then
+                    hl = Instance.new("Highlight")
+                    hl.Name = "MetalESP"
+                    hl.Parent = p.Character
+                end
+                hl.FillColor = Color3.fromHSV(tick() % 5 / 5, 1, 1) -- Colores neón dinámicos
+                hl.OutlineColor = Color3.new(1, 1, 1)
+                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            else
+                if hl then hl:Destroy() end
+            end
+        end
+    end
+end)
