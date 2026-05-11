@@ -1,0 +1,89 @@
+--[[
+    MARCA ORIGINAL: mundo_script
+    MOD: Red Edition + No Click (Hitbox)
+    ESTADO: BloxSpin Utopia Name Removed
+]]
+
+local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
+local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
+
+-- 1. IDENTIDAD VISUAL ROJA
+Library.AccentColor = Color3.fromRGB(255, 0, 0)
+Library.MainColor = Color3.fromRGB(20, 20, 20)
+
+local Window = Library:CreateWindow({
+    Title = 'mundo_script', -- Nombre único de tu panel
+    Center = true,
+    AutoShow = false, 
+    TabPadding = 4
+})
+
+-- 2. BOTÓN DE MARCA MS (Para abrir y cerrar)
+local MobileGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local OpenBtn = Instance.new("TextButton", MobileGui)
+local Corner = Instance.new("UICorner", OpenBtn)
+
+OpenBtn.Size = UDim2.new(0, 50, 0, 50)
+OpenBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
+OpenBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+OpenBtn.Text = "MS"
+OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenBtn.Font = Enum.Font.GothamBold
+OpenBtn.TextSize = 18
+OpenBtn.Draggable = true
+Corner.CornerRadius = UDim.new(0, 12)
+
+OpenBtn.MouseButton1Click:Connect(function()
+    Library:Toggle()
+end)
+
+-- 3. NUEVA PESTAÑA MUNDO SCRIPT
+local MainTab = Window:AddTab('Principal')
+local CombatGroup = MainTab:AddLeftGroupbox('Combate')
+
+-- Botón No Click (Hitbox)
+CombatGroup:AddToggle('NoClickHitbox', {
+    Text = 'No Click (Big Hitbox)',
+    Default = false,
+    Callback = function(Value)
+        _G.HitboxEnabled = Value
+    end
+})
+
+-- Bucle de Hitbox mejorado
+task.spawn(function()
+    while true do
+        task.wait(0.5)
+        if _G.HitboxEnabled then
+            pcall(function()
+                -- Busca enemigos y expande su área de impacto
+                for _, obj in pairs(game:GetService("Workspace"):GetDescendants()) do
+                    if obj:IsA("Humanoid") and obj.Parent.Name ~= game.Players.LocalPlayer.Name then
+                        local hrp = obj.Parent:FindFirstChild("HumanoidRootPart")
+                        if hrp then
+                            hrp.Size = Vector3.new(15, 15, 15)
+                            hrp.Transparency = 0.8
+                            hrp.BrickColor = BrickColor.new("Really red")
+                            hrp.CanCollide = false
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- 4. CARGA DEL SCRIPT ORIGINAL (MODIFICADO PARA ELIMINAR EL NOMBRE)
+task.spawn(function()
+    local success, content = pcall(function()
+        return game:HttpGet("https://raw.githubusercontent.com/Klinac/scripts/main/blockspin_new.lua")
+    end)
+    
+    if success then
+        -- Filtro de seguridad: Reemplazamos cualquier mención de "BloxSpin Utopia" por "mundo_script"
+        local clean_content = content:gsub("BloxSpin Utopia", "mundo_script")
+        loadstring(clean_content)()
+    end
+end)
+
+Library:Notify("Script Cargado: Marca 'mundo_script' activa.")
